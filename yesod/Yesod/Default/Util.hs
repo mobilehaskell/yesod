@@ -21,8 +21,8 @@ import Control.Monad (when, unless)
 import Control.Monad.Trans.Resource (runResourceT)
 import Data.Conduit (($$))
 import Data.Conduit.Binary (sourceLbs, sinkFileCautious)
-import System.Directory (doesFileExist, createDirectoryIfMissing)
-import Language.Haskell.TH.Syntax
+import System.Directory as Dir (doesFileExist, createDirectoryIfMissing)
+import Language.Haskell.TH.Syntax as TH
 import Text.Lucius (luciusFile, luciusFileReload)
 import Text.Julius (juliusFile, juliusFileReload)
 import Text.Cassius (cassiusFile, cassiusFileReload)
@@ -44,8 +44,8 @@ addStaticContentExternal
     -> L.ByteString -- ^ file contents
     -> HandlerT master IO (Maybe (Either Text (Route master, [(Text, Text)])))
 addStaticContentExternal minify hash staticDir toRoute ext' _ content = do
-    liftIO $ createDirectoryIfMissing True statictmp
-    exists <- liftIO $ doesFileExist fn'
+    liftIO $ Dir.createDirectoryIfMissing True statictmp
+    exists <- liftIO $ Dir.doesFileExist fn'
     unless exists $
         liftIO $ runResourceT $ sourceLbs content' $$ sinkFileCautious fn'
     return $ Just $ Right (toRoute ["tmp", pack fn], [])
@@ -127,7 +127,7 @@ warnUnlessExists :: Bool
                  -> String -> (FilePath -> Q Exp) -> Q (Maybe Exp)
 warnUnlessExists shouldWarn x wrap glob f = do
     let fn = globFile glob x
-    e <- qRunIO $ doesFileExist fn
+    e <- TH.doesFileExist fn
     when (shouldWarn && not e) $ qRunIO $ putStrLn $ "widget file not found: " ++ fn
     if e
         then do
